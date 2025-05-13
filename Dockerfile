@@ -4,6 +4,6 @@ WORKDIR /app
 
 RUN pip install pandas
 
-COPY app/ /app/
+COPY src/ /app/
 
 CMD ["python", "main.py"]
