@@ -1,51 +1,41 @@
-print("hello world, estou usando docker")
-
 import pandas as pd
 
-data = pd.read_csv('dados.csv')
-print(data.head())
-print(data.columns)
+# Carrega os dados
+dados = pd.read_csv('dados.csv')
 
-# Solicitar ao usuário o mês e ano
-month = 4 #input("Digite o mês (mm): ")
-year = 2025 #input("Digite o ano (yyyy): ")
+# Calcula a distância percorrida
+dados['Distancia'] = dados['Km final'] - dados['Km inicial']
 
+# Converte a coluna 'Data' para datetime
+dados['Data'] = pd.to_datetime(dados['Data'], dayfirst=True)
 
-# Calcular a distância percorrida
-data['Distancia'] = data['Km final'] - data['Km inicial']
-pd.set_option("display.max_columns", 20)  # mostra até 20 colunas
-pd.set_option("display.width", 200) 
-# Converter a coluna 'Data' para o formato datetime especificando que o dia vem primeiro
-data['Data'] = pd.to_datetime(data['Data'], dayfirst=True)
+def filtrar_por_mes_ano(dataframe, mes, ano):
+    """Filtra o DataFrame por um determinado mês e ano."""
+    inicio_mes = pd.to_datetime(f'01/{mes}/{ano}', dayfirst=True)
+    fim_mes = inicio_mes + pd.offsets.MonthEnd(0)  # Fim do mês corrente
+    mascara = (dataframe['Data'] >= inicio_mes) & (dataframe['Data'] <= fim_mes)
+    return dataframe[mascara]
 
-def filter_data(month, year):
-    try:
-        # Criar datas de início e fim do mês usando o primeiro e último dia do mês fornecido
-        start_date = pd.to_datetime(f'01/{month}/{year}', dayfirst=True)
-        end_date = start_date + pd.offsets.MonthEnd(1)
+def gerar_resumo(dataframe_filtrado):
+    """Gera um resumo da distância percorrida e consumo de diesel por motorista."""
+    if dataframe_filtrado.empty:
+        print("Nenhum dado encontrado para o período.")
+        return
 
-        # Filtrar os dados
-        mask = (data['Data'] >= start_date) & (data['Data'] <= end_date)
-        filtered_data = data[mask]
+    resumo_motoristas = dataframe_filtrado.groupby('Nome do motorista').agg(
+        Distancia=('Distancia', 'sum'),
+        Total_Diesel=('Óleo diesel', 'sum')
+    ).reset_index()
 
-        if filtered_data.empty:
-            print("Nenhum dado encontrado para o período selecionado.")
-        else:
-            # Agrupar os dados filtrados por 'Nome do motorista', somar as distâncias e o óleo diesel
-            distancias_motorista = filtered_data.groupby('Nome do motorista').agg({
-                'Distancia': 'sum',
-                'Óleo diesel': 'sum'
-            }).reset_index()
+    resumo_motoristas['KM_por_L'] = round(resumo_motoristas['Distancia'] / resumo_motoristas['Total_Diesel'], 2)
+    print(resumo_motoristas)
 
-            # Renomear a coluna para clareza
-            distancias_motorista = distancias_motorista.rename(columns={'Óleo diesel': 'Total Diesel'})
+# Define o mês e ano desejados
+mes = 4
+ano = 2025
 
-            # Adicionar a coluna 'KM por L' dividindo a Distancia pelo Total Diesel
-            distancias_motorista['KM por L'] = round(distancias_motorista['Distancia'] / distancias_motorista['Total Diesel'], 2)
+# Filtra os dados
+dados_filtrados = filtrar_por_mes_ano(dados, mes, ano)
 
-            print(distancias_motorista)
-    except Exception as e:
-        print("Erro:", str(e))
-
-# Exemplo de uso
-filter_data(month, year)  # Insira o mês e ano desejados
+# Gera o resumo
+gerar_resumo(dados_filtrados)
