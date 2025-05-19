@@ -50,7 +50,7 @@ def datas_duplicadas(dataframe_filtrado):
         if duplicated_entries.empty:
             print(f"Nenhum motorista com datas duplicadas foi encontrado em {mes}/{ano}.")
         else:
-            print(f"Motoristas com datas duplicadas em {mes}/{ano}:")
+            print(f"Motoristas com datas duplicadas em {mes}/{ano}:\n")
             print(duplicated_entries[['Nome do motorista', 'Data']])
      
 
@@ -60,10 +60,25 @@ def datas_duplicadas(dataframe_filtrado):
 mes = input("Digite o número referente ao mẽs: ")
 ano = input("Digite o número referente ao ano: ")
 
+if ano.lower()== 'a':
+     ano = datetime.now().year
+else:
+    try:
+          ano = int(ano)
+    except ValueError:
+         print("Entrada inválida para ano, digite apenas o número do ano ou 'a'.")
+        
+         
+
 # Filtra os dados
 dados_filtrados = filtrar_por_mes_ano(dados, mes, ano)
 
 # Gera o resumo
+
+print(f"Resumo do mês {mes} de {ano} \n")
 gerar_resumo(dados_filtrados)
+print("\n")
 distancia_errada(dados_filtrados)
+print("\n")
 datas_duplicadas(dados_filtrados)
+print("\n")
